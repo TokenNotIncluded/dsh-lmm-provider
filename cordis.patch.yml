@@ -1,0 +1,3 @@
+- insert:
+    - id: lmm-model-provider
+      name: '@tokennotincluded/dsh-lmm-provider'

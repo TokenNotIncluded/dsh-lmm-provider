@@ -1,0 +1,3 @@
+[submodule "vendor/pi-lmm-provider"]
+	path = vendor/pi-lmm-provider
+	url = https://github.com/TokenNotIncluded/pi-lmm-provider.git
