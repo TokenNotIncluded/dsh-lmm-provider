@@ -118,7 +118,8 @@ test('mounts the fixed LMM adapter and browser authorization flow', () => {
         return Object.assign(() => {}, { replace() {} });
       },
     },
-    inject(_dependencies: string[], callback: (ctx: { authorization: { registerFlow(value: AuthorizationFlow): void } }) => void) {
+    inject(dependencies: string[], callback: (ctx: { authorization: { registerFlow(value: AuthorizationFlow): void } }) => void) {
+      if (dependencies.includes('connection')) return;
       callback({ authorization: { registerFlow(value) { flow = value; } } });
     },
     get() { return undefined; },

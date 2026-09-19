@@ -18,6 +18,7 @@ import type {} from '@deepseek-ai/dsh-authorization';
 import type {} from '@deepseek-ai/dsh-credentials';
 import { LmmIntegration } from '../vendor/pi-lmm-provider/src/provider.ts';
 import { PROVIDER_ID } from '../vendor/pi-lmm-provider/src/protocol.ts';
+import { mountBrowserAuth } from './web-auth.ts';
 
 export const name = 'dsh-lmm-provider';
 export const inject = ['llm', 'credentials'];
@@ -254,7 +255,7 @@ export function apply(ctx: Context): void {
     auth: { credentials, authContext },
     resolveAttachments: () => ctx.get('attachments'),
   });
-  ctx.llm.registerAdapter([PROVIDER_ID], new RefreshingAdapter(adapter, catalog));
+  const registration = ctx.llm.registerAdapter([PROVIDER_ID], new RefreshingAdapter(adapter, catalog));
 
   ctx.inject(['authorization'], (authorized) => {
     authorized.authorization.registerFlow({
@@ -274,9 +275,11 @@ export function apply(ctx: Context): void {
   });
 
   ctx.on('credentials/record-updated', (key) => {
-    if (key === RECORD_KEY) catalog.invalidate();
+    if (key === RECORD_KEY) {
+      catalog.invalidate();
+      registration.replace([PROVIDER_ID]);
+    }
   });
+  mountBrowserAuth(ctx, RECORD_KEY);
   ctx.effect(() => () => { integration.dispose(); });
 }
-
-export default apply;

@@ -1,6 +1,6 @@
 {
   "name": "@tokennotincluded/dsh-lmm-provider",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "description": "LMM browser OAuth and account-scoped model provider for DeepSeek Harness",
   "type": "module",
   "license": "AGPL-3.0-only",
@@ -24,10 +24,12 @@
   "exports": {
     ".": "./lib/index.mjs",
     "./cordis.patch.yml": "./cordis.patch.yml",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./client": "./lib/client.js"
   },
   "files": [
     "lib/index.mjs",
+    "lib/client.js",
     "cordis.patch.yml",
     "README.md"
   ],
@@ -46,10 +48,17 @@
     },
     "bundle": {
       "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-settings-models",
+        "@deepseek-ai/dsh-client-connection"
+      ]
     }
   },
   "scripts": {
-    "build": "tsdown src/index.ts --format esm --out-dir lib --clean",
+    "build": "tsdown src/index.ts --format esm --out-dir lib --clean && node scripts/build-client.mjs",
     "test": "node --experimental-strip-types --test test/*.test.ts",
     "typecheck": "tsc --noEmit",
     "pack:check": "npm run build && npm pack --dry-run --ignore-scripts"
@@ -57,29 +66,39 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@earendil-works/pi-ai": "^0.85.1",
-    "@deepseek-ai/dsh-home-paths": "0.1.5-rc.1",
-    "@deepseek-ai/dsh-llm-pi-ai": "0.1.5-rc.1",
-    "typebox": "^1.3.30"
+    "@deepseek-ai/dsh-home-paths": "0.1.5-rc.2",
+    "@deepseek-ai/dsh-llm-pi-ai": "0.1.5-rc.2",
+    "typebox": "^1.3.30",
+    "@deepseek-ai/dsh-authorization": "0.1.5-rc.2"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2",
-    "@deepseek-ai/dsh-attachment": "^0.1.5-rc.1",
-    "@deepseek-ai/dsh-authorization": "^0.1.5-rc.1",
-    "@deepseek-ai/dsh-credentials": "^0.1.5-rc.1",
-    "@deepseek-ai/dsh-launch-environment": "^0.1.5-rc.1",
-    "@deepseek-ai/dsh-llm": "^0.1.5-rc.1",
-    "@deepseek-ai/dsh-timeout": "^0.1.5-rc.1"
+    "@deepseek-ai/dsh-attachment": "^0.1.5-rc.2",
+    "@deepseek-ai/dsh-credentials": "^0.1.5-rc.2",
+    "@deepseek-ai/dsh-launch-environment": "^0.1.5-rc.2",
+    "@deepseek-ai/dsh-llm": "^0.1.5-rc.2",
+    "@deepseek-ai/dsh-timeout": "^0.1.5-rc.2",
+    "@deepseek-ai/dsh-client-connection": "^0.1.5-rc.2"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.2",
-    "@deepseek-ai/dsh-attachment": "0.1.5-rc.1",
-    "@deepseek-ai/dsh-authorization": "0.1.5-rc.1",
-    "@deepseek-ai/dsh-credentials": "0.1.5-rc.1",
-    "@deepseek-ai/dsh-launch-environment": "0.1.5-rc.1",
-    "@deepseek-ai/dsh-llm": "0.1.5-rc.1",
-    "@deepseek-ai/dsh-timeout": "0.1.5-rc.1",
+    "@deepseek-ai/dsh-attachment": "0.1.5-rc.2",
+    "@deepseek-ai/dsh-credentials": "0.1.5-rc.2",
+    "@deepseek-ai/dsh-launch-environment": "0.1.5-rc.2",
+    "@deepseek-ai/dsh-llm": "0.1.5-rc.2",
+    "@deepseek-ai/dsh-timeout": "0.1.5-rc.2",
     "@types/node": "^22.19.0",
     "tsdown": "^0.22.14",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "@deepseek-ai/dsh-client-connection": "0.1.5-rc.2",
+    "@deepseek-ai/dsh-fs": "0.1.5-rc.2",
+    "esbuild": "^0.25.0",
+    "react": "^18.3.1",
+    "@types/react": "^18.3.0"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-client-connection": {
+      "optional": true
+    }
   }
 }
