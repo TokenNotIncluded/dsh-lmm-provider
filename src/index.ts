@@ -242,6 +242,7 @@ export function apply(ctx: Context): void {
   const integration = new LmmIntegration({
     clientId: DSH_CLIENT_ID,
     hostName: 'DSH',
+    loginTimeoutMs: 5 * 60_000,
     refreshJournalDirectory: join(resolveDshHome(), 'lmm-refresh-journal'),
   });
   const credentials = credentialStoreFrom(ctx);

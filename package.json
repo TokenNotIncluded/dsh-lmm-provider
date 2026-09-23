@@ -1,6 +1,6 @@
 {
   "name": "@tokennotincluded/dsh-lmm-provider",
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.3",
   "description": "LMM browser OAuth and account-scoped model provider for DeepSeek Harness",
   "type": "module",
   "license": "AGPL-3.0-only",

@@ -7,6 +7,7 @@ type View = {
   attempt: string;
   state: 'pending' | 'authorized' | 'cancelled' | 'failed';
   notices: { message: string; url?: string; code?: string }[];
+  error?: string;
   prompt?: { id: string; kind: 'text' | 'secret' | 'select'; message: string; placeholder?: string; options?: { id: string; label: string }[] };
 };
 interface ClientContext {
@@ -24,6 +25,7 @@ function LoginCard({ call }: { call: Caller }) {
   const [view, setView] = useState<View>();
   const [answer, setAnswer] = useState('');
   const [error, setError] = useState('');
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'manual'>('idle');
   const active = useRef<string>();
   const refresh = useCallback(async () => {
     const status = await call('status') as { signedIn: boolean; busy: boolean };
@@ -48,8 +50,9 @@ function LoginCard({ call }: { call: Caller }) {
     return () => { disposed = true; clearTimeout(timer); };
   }, [view?.attempt, view?.state, call, refresh]);
   useEffect(() => { setAnswer(''); }, [view?.prompt?.id]);
+  const loginUrl = view?.state === 'pending' ? [...view.notices].reverse().find((notice) => notice.url && safeLoginUrl(notice.url))?.url : undefined;
   const start = async () => {
-    setError(''); setBusy(true);
+    setError(''); setCopyState('idle'); setBusy(true);
     try { const next = await call('begin') as View; active.current = next.attempt; setView(next); }
     catch (cause) { setBusy(false); setError(cause instanceof Error ? cause.message : 'Sign-in could not start.'); }
   };
@@ -60,6 +63,11 @@ function LoginCard({ call }: { call: Caller }) {
     catch { setError('This question expired. Wait for the current sign-in step.'); }
   };
   const signOut = async () => { try { await call('logout'); setView(undefined); await refresh(); } catch { setError('Sign-out failed. Try again.'); } };
+  const copyLoginUrl = async () => {
+    if (!loginUrl) return;
+    try { await navigator.clipboard.writeText(loginUrl); setCopyState('copied'); }
+    catch { setCopyState('manual'); }
+  };
   const prompt = view?.prompt;
   return <section aria-label="LMM" style={{ marginTop: 24, padding: 20, border: '1px solid #8886', borderRadius: 8 }}>
     <h3 style={{ margin: '0 0 8px' }}>LMM</h3>
@@ -70,10 +78,17 @@ function LoginCard({ call }: { call: Caller }) {
       {view?.state === 'pending' && <button style={buttonStyle} onClick={() => void cancel().catch(() => setError('Cancellation failed. Try again.'))}>Cancel</button>}
     </div>
     <div aria-live="polite">
-      {view?.notices.map((notice, i) => <p key={i}>{notice.message}{notice.url && safeLoginUrl(notice.url) && <> <a href={notice.url} target="_blank" rel="noreferrer">Open LMM sign-in</a></>}{notice.code && <code> {notice.code}</code>}</p>)}
+      {view?.notices.map((notice, i) => <p key={i}>{notice.message}{notice.code && <code> {notice.code}</code>}</p>)}
+      {loginUrl && <div>
+        <p>Open the authorization link in the browser where you are already signed in to LMM. If the Desktop window cannot open it, copy the link and paste it into that browser. On the LMM page, choose <strong>Continue</strong> if you are already signed in; use <strong>Sign in</strong> only if that browser is signed out.</p>
+        <a href={loginUrl} target="_blank" rel="noopener noreferrer">Open LMM authorization</a>{' '}
+        <button style={buttonStyle} onClick={() => void copyLoginUrl()}>Copy link</button>
+        {copyState === 'copied' && <span role="status"> Link copied.</span>}
+        {copyState === 'manual' && <label> Select and copy this link: <input value={loginUrl} readOnly onFocus={(event) => event.currentTarget.select()} style={{ width: '100%' }} /></label>}
+      </div>}
       {view?.state === 'authorized' && <p>Sign-in complete.</p>}
       {view?.state === 'cancelled' && <p>Sign-in cancelled.</p>}
-      {view?.state === 'failed' && <p>Sign-in failed. Check your connection and try again.</p>}
+      {view?.state === 'failed' && <p role="alert">{view.error ?? 'Sign-in failed. Try again.'}</p>}
       {error && <p role="alert">{error}</p>}
     </div>
     {prompt && <form onSubmit={(event) => { event.preventDefault(); void submit(); }}>
@@ -84,7 +99,7 @@ function LoginCard({ call }: { call: Caller }) {
   </section>;
 }
 export function safeLoginUrl(value: string): boolean {
-  try { const url = new URL(value); return url.protocol === 'https:' && url.hostname === 'api.lmm.best' && url.username === '' && url.password === ''; } catch { return false; }
+  try { const url = new URL(value); return url.protocol === 'https:' && url.hostname === 'api.lmm.best' && url.port === '' && url.pathname === '/api/oauth2/authorize' && url.username === '' && url.password === ''; } catch { return false; }
 }
 export const inject = ['slots', 'connection'];
 export function apply(ctx: ClientContext): void {

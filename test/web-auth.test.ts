@@ -63,6 +63,17 @@ test('cancel and unload abort prompts; errors cannot leak provider response bodi
   await h.call('answer', { attempt: second.attempt, prompt: prompt.id, value: 'x' }); await tick();
   const failed = value(await h.call('poll', { attempt: second.attempt }));
   assert.equal(failed.state, 'failed'); assert.equal(JSON.stringify(failed).includes('never-echo'), false);
+  assert.match(failed.error, /DSH Host log/);
   const third = value(await h.call('begin')); h.close(); await tick();
   assert.equal(value(await h.call('poll', { attempt: third.attempt })).state, 'cancelled');
+});
+test('known callback failures get a useful message without returning private error text', async () => {
+  const h = harness(async () => { throw Object.assign(new Error('state=private-value'), { code: 'callback_unavailable' }); });
+  const started = value(await h.call('begin'));
+  await tick();
+  const failed = value(await h.call('poll', { attempt: started.attempt }));
+  assert.equal(failed.state, 'failed');
+  assert.match(failed.error, /127\.0\.0\.1/);
+  assert.equal(JSON.stringify(failed).includes('private-value'), false);
+  h.close();
 });

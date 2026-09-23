@@ -6,18 +6,33 @@ import type { ConnectionRpcResult } from '@deepseek-ai/dsh-client-connection';
 import type {} from '@deepseek-ai/dsh-client-connection';
 
 export const AUTH_CHANNEL = '/api';
-const ATTEMPT_MS = 10 * 60_000;
+const ATTEMPT_MS = 5 * 60_000;
 type PromptView = Omit<AuthorizationPrompt, 'signal'> & { id: string; options?: readonly { id: string; label: string }[] };
 type Attempt = {
   id: string;
   state: 'pending' | 'authorized' | 'cancelled' | 'failed';
   controller: AbortController;
   notices: AuthorizationNotice[];
+  error?: string;
   prompt?: PromptView;
   answer?: (value: string) => void;
 };
 const fail = (code: string, message: string): ConnectionRpcResult<never> => ({ ok: false, error: { code, message, details: {} } });
 const ok = (value: unknown): ConnectionRpcResult<unknown> => ({ ok: true, value });
+
+/** Only fixed, credential-free messages may cross the browser RPC boundary. */
+function publicAuthError(error: unknown): string {
+  const code = error && typeof error === 'object' && 'code' in error ? error.code : undefined;
+  switch (code) {
+    case 'callback_unavailable': return 'DSH could not listen for the browser callback on 127.0.0.1. Check the local firewall and try again.';
+    case 'oauth_denied': return 'LMM access was denied. Start sign-in again to retry.';
+    case 'transport_error': return 'DSH could not reach LMM. Check your connection and try again.';
+    case 'invalid_response': return 'LMM returned an invalid authorization response. Update the plugin and try again.';
+    case 'NOT_COMMITTED': return 'DSH did not save the LMM login. Restart DSH and try again.';
+    case 'ALREADY_IN_FLIGHT': return 'Another LMM sign-in is already running. Finish or cancel that attempt first.';
+    default: return 'LMM sign-in failed. Try again; if it persists, check the DSH Host log.';
+  }
+}
 
 /** The host's authenticated Connection transport owns Host/Origin/cookie checks. */
 export function mountBrowserAuth(ctx: Context, key: CredentialKey): void {
@@ -30,6 +45,7 @@ export function mountBrowserAuth(ctx: Context, key: CredentialKey): void {
     const view = (attempt: Attempt) => ({
       attempt: attempt.id, state: attempt.state, notices: attempt.notices,
       ...(attempt.prompt === undefined ? {} : { prompt: attempt.prompt }),
+      ...(attempt.error === undefined ? {} : { error: attempt.error }),
     });
     const stop = () => { current?.controller.abort(); };
     web.effect(() => stop);
@@ -65,9 +81,10 @@ export function mountBrowserAuth(ctx: Context, key: CredentialKey): void {
               });
             },
           },
-        }).then((outcome) => { attempt.state = outcome.status; }).catch(() => {
-          // Never reflect provider errors or token exchange response bodies into a browser.
+        }).then((outcome) => { attempt.state = outcome.status; }).catch((error: unknown) => {
+          // Never reflect provider error text or token exchange response bodies into a browser.
           attempt.state = attempt.controller.signal.aborted ? 'cancelled' : 'failed';
+          if (attempt.state === 'failed') attempt.error = publicAuthError(error);
         }).finally(() => {
           clearTimeout(timer);
           delete attempt.prompt;
