@@ -1,5 +1,3 @@
 - insert:
-    - id: authorization
-      name: '@deepseek-ai/dsh-authorization'
     - id: lmm-model-provider
       name: '@tokennotincluded/dsh-lmm-provider'

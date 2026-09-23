@@ -2,11 +2,11 @@
 
 Use the models available to your [LMM](https://api.lmm.best) account directly in DeepSeek Harness. Authentication uses browser OAuth with PKCE and a loopback callback. No API key is pasted into DSH.
 
-This package is an alpha tested with DSH `0.1.5-rc.2`. It requires Node.js `22.19.0` or newer in the supported Node 22 / Node 24+ lines.
+Version `0.1.0-alpha.4` is tested with DSH and official DSH Desktop `0.1.7-alpha.2`. It requires Node.js `22.19.0` or newer in the supported Node 22 / Node 24+ lines. For DSH `0.1.5-rc.2`, use plugin `0.1.0-alpha.3` instead; the DSH runtime packages are not interchangeable between those releases.
 
 ## Official DSH Desktop
 
-Open **Plugins** in the Desktop application and add `@tokennotincluded/dsh-lmm-provider@alpha`. The official Desktop application owns an isolated `desktop` profile; installing into a CLI `web` profile does not install the plugin in Desktop. If an older local, Git or release archive copy of this package is already installed, remove that package in Desktop Plugins first, then add the npm package. The Desktop manager permits one dependency with this package name per profile, so two sources cannot run together there. Restart Desktop if the manager asks for it.
+On official DSH Desktop `0.1.7-alpha.2`, open **Plugins** and add `@tokennotincluded/dsh-lmm-provider@0.1.0-alpha.4`. The official Desktop application owns an isolated `desktop` profile; installing into a CLI `web` profile does not install the plugin in Desktop. If an older local, Git or release archive copy of this package is already installed, remove that package in Desktop Plugins first, then add the npm package. The Desktop manager permits one dependency with this package name per profile, so two sources cannot run together there. Restart Desktop if the manager asks for it.
 
 In **Settings → Models**, choose **Sign in with LMM**. Use **Open LMM authorization** if it opens your normal browser. If the link does nothing or opens a browser without your LMM login, choose **Copy link** and paste it into the browser where you are already signed in. On the LMM authorization page, choose **Continue** when already signed in. The **Sign in** link is for a browser without an active LMM session. Review the account and permissions, choose **Allow access**, and wait for DSH to show **Sign-in complete**. If the browser does not return to DSH automatically, use **Return to DSH** on the completion page.
 
@@ -17,7 +17,7 @@ Keep Desktop open throughout the attempt. The authorization link is short lived 
 Install the npm package in the profile you run:
 
 ```sh
-dsh plugin --profile web add @tokennotincluded/dsh-lmm-provider@alpha
+dsh plugin --profile web add @tokennotincluded/dsh-lmm-provider@0.1.0-alpha.4
 ```
 
 The DSH package manager also keys this dependency by package name. To switch from a local, Git or archive installation, remove `@tokennotincluded/dsh-lmm-provider` from that profile, then add the npm package. Credential records are stored separately from the package dependency.
@@ -25,7 +25,7 @@ The DSH package manager also keys this dependency by package name. To switch fro
 ### Install from source
 
 ```sh
-npm install -g @deepseek-ai/dsh@0.1.5-rc.2
+npm install -g @deepseek-ai/dsh@0.1.7-alpha.2
 git clone --recurse-submodules https://github.com/TokenNotIncluded/dsh-lmm-provider.git
 cd dsh-lmm-provider
 npm ci
