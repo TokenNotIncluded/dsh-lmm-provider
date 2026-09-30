@@ -2,11 +2,11 @@
 
 Use the models available to your [LMM](https://api.lmm.best) account directly in DeepSeek Harness. Authentication uses browser OAuth with PKCE and a loopback callback. No API key is pasted into DSH.
 
-Version `0.1.0-alpha.4` is tested with DSH and official DSH Desktop `0.1.7-alpha.2`. It requires Node.js `22.19.0` or newer in the supported Node 22 / Node 24+ lines. For DSH `0.1.5-rc.2`, use plugin `0.1.0-alpha.3` instead; the DSH runtime packages are not interchangeable between those releases.
+Version `0.1.0-alpha.5` is tested with the actual DSH Web host `0.2.0-rc.2` and the current npm `latest`. This is a tested baseline, not an upper version limit. All DSH service dependencies have a minimum compatible version and no upper bound. Older Desktop `0.1.7-alpha.2` can use plugin `0.1.0-alpha.4`. It requires Node.js `22.19.0` or newer in the supported Node 22 / Node 24+ lines. For DSH `0.1.5-rc.2`, use plugin `0.1.0-alpha.3` instead; the DSH runtime packages are not interchangeable between those releases.
 
 ## Official DSH Desktop
 
-On official DSH Desktop `0.1.7-alpha.2`, open **Plugins** and add `@tokennotincluded/dsh-lmm-provider@0.1.0-alpha.4`. The official Desktop application owns an isolated `desktop` profile; installing into a CLI `web` profile does not install the plugin in Desktop. If an older local, Git or release archive copy of this package is already installed, remove that package in Desktop Plugins first, then add the npm package. The Desktop manager permits one dependency with this package name per profile, so two sources cannot run together there. Restart Desktop if the manager asks for it.
+On a current official DSH Desktop using DSH `0.2.0-rc.2` or newer, open **Plugins** and add the current LMM plugin. For Desktop `0.1.7-alpha.2`, use `@tokennotincluded/dsh-lmm-provider@0.1.0-alpha.4`. The official Desktop application owns an isolated `desktop` profile; installing into a CLI `web` profile does not install the plugin in Desktop. If an older local, Git or release archive copy of this package is already installed, remove that package in Desktop Plugins first, then add the npm package. The Desktop manager permits one dependency with this package name per profile, so two sources cannot run together there. Restart Desktop if the manager asks for it.
 
 In **Settings → Models**, choose **Sign in with LMM**. Use **Open LMM authorization** if it opens your normal browser. If the link does nothing or opens a browser without your LMM login, choose **Copy link** and paste it into the browser where you are already signed in. On the LMM authorization page, choose **Continue** when already signed in. The **Sign in** link is for a browser without an active LMM session. Review the account and permissions, choose **Allow access**, and wait for DSH to show **Sign-in complete**. If the browser does not return to DSH automatically, use **Return to DSH** on the completion page.
 
@@ -17,7 +17,7 @@ Keep Desktop open throughout the attempt. The authorization link is short lived 
 Install the npm package in the profile you run:
 
 ```sh
-dsh plugin --profile web add @tokennotincluded/dsh-lmm-provider@0.1.0-alpha.4
+dsh plugin --profile web add @tokennotincluded/dsh-lmm-provider@latest
 ```
 
 The DSH package manager also keys this dependency by package name. To switch from a local, Git or archive installation, remove `@tokennotincluded/dsh-lmm-provider` from that profile, then add the npm package. Credential records are stored separately from the package dependency.
@@ -25,7 +25,7 @@ The DSH package manager also keys this dependency by package name. To switch fro
 ### Install from source
 
 ```sh
-npm install -g @deepseek-ai/dsh@0.1.7-alpha.2
+npm install -g @deepseek-ai/dsh@latest
 git clone --recurse-submodules https://github.com/TokenNotIncluded/dsh-lmm-provider.git
 cd dsh-lmm-provider
 npm ci
@@ -59,6 +59,9 @@ npm ci
 npm test
 npm run typecheck
 npm run pack:check
+npm run test:host
 ```
 
 The package ships both the Host adapter and the browser bundle. Tests cover credential isolation, OAuth client identity, loader dependency metadata, authorization prompts, cancellation, and secret-free responses. A successful build or installation alone is not proof of live OAuth and model invocation; verify those against an authorized test account before relying on a new release.
+
+`test:host` launches the official DSH Web process in a temporary home with the built plugin, checks its authenticated Connection routes, drives browser OAuth PKCE through a local fixture, verifies the durable credential and account catalog, streams a model response through the real DSH adapter, then signs out. The LMM network is intercepted by a test-only preload; no production grant or billable call is made. CI runs the baseline and current official npm host.

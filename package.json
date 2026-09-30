@@ -1,6 +1,6 @@
 {
   "name": "@tokennotincluded/dsh-lmm-provider",
-  "version": "0.1.0-alpha.4",
+  "version": "0.1.0-alpha.5",
   "description": "LMM browser OAuth and account-scoped model provider for DeepSeek Harness",
   "type": "module",
   "license": "AGPL-3.0-only",
@@ -37,11 +37,11 @@
     "plugin": {
       "schemaVersion": 1,
       "displayName": {
-        "zh-CN": "LMM 模型",
+        "zh-CN": "LMM \u6a21\u578b",
         "en": "LMM Models"
       },
       "summary": {
-        "zh-CN": "通过浏览器 OAuth 登录 LMM，并在 DSH 中使用账户可用的模型。",
+        "zh-CN": "\u901a\u8fc7\u6d4f\u89c8\u5668 OAuth \u767b\u5f55 LMM\uff0c\u5e76\u5728 DSH \u4e2d\u4f7f\u7528\u8d26\u6237\u53ef\u7528\u7684\u6a21\u578b\u3002",
         "en": "Sign in to LMM with browser OAuth and use account-scoped models in DSH."
       },
       "category": "model-provider"
@@ -61,40 +61,42 @@
     "build": "tsdown src/index.ts --format esm --out-dir lib --clean && node scripts/build-client.mjs",
     "test": "node --experimental-strip-types --test test/*.test.ts",
     "typecheck": "tsc --noEmit",
-    "pack:check": "npm run build && npm pack --dry-run --ignore-scripts"
+    "pack:check": "npm run build && npm pack --dry-run --ignore-scripts",
+    "test:host": "node scripts/test-host.mjs"
   },
   "dependencies": {
+    "@deepseek-ai/dsh-authorization": ">=0.2.0-rc.2",
+    "@deepseek-ai/dsh-home-paths": ">=0.2.0-rc.2",
+    "@deepseek-ai/dsh-llm-pi-ai": ">=0.2.0-rc.2",
+    "@earendil-works/pi-ai": "^0.87.1",
     "@modelcontextprotocol/sdk": "^1.30.0",
-    "@earendil-works/pi-ai": "^0.85.1",
-    "@deepseek-ai/dsh-home-paths": "0.1.7-alpha.2",
-    "@deepseek-ai/dsh-llm-pi-ai": "0.1.7-alpha.2",
-    "typebox": "^1.3.30",
-    "@deepseek-ai/dsh-authorization": "0.1.7-alpha.2"
+    "typebox": "^1.3.30"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "~4.0.4",
-    "@deepseek-ai/dsh-attachment": "0.1.7-alpha.2",
-    "@deepseek-ai/dsh-credentials": "0.1.7-alpha.2",
-    "@deepseek-ai/dsh-launch-environment": "0.1.7-alpha.2",
-    "@deepseek-ai/dsh-llm": "0.1.7-alpha.2",
-    "@deepseek-ai/dsh-timeout": "0.1.7-alpha.2",
-    "@deepseek-ai/dsh-client-connection": "0.1.7-alpha.2"
+    "@deepseek-ai/dsh-attachment": ">=0.2.0-rc.2",
+    "@deepseek-ai/dsh-client-connection": ">=0.2.0-rc.2",
+    "@deepseek-ai/dsh-credentials": ">=0.2.0-rc.2",
+    "@deepseek-ai/dsh-launch-environment": ">=0.2.0-rc.2",
+    "@deepseek-ai/dsh-llm": ">=0.2.0-rc.2",
+    "@deepseek-ai/dsh-timeout": ">=0.2.0-rc.2"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.4",
-    "@deepseek-ai/dsh-attachment": "0.1.7-alpha.2",
-    "@deepseek-ai/dsh-credentials": "0.1.7-alpha.2",
-    "@deepseek-ai/dsh-launch-environment": "0.1.7-alpha.2",
-    "@deepseek-ai/dsh-llm": "0.1.7-alpha.2",
-    "@deepseek-ai/dsh-timeout": "0.1.7-alpha.2",
+    "@deepseek-ai/dsh-attachment": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-client-connection": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-credentials": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-fs": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-launch-environment": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-llm": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-timeout": "0.2.0-rc.2",
     "@types/node": "^22.19.0",
-    "tsdown": "^0.22.14",
-    "typescript": "^6.0.3",
-    "@deepseek-ai/dsh-client-connection": "0.1.7-alpha.2",
-    "@deepseek-ai/dsh-fs": "0.1.7-alpha.2",
+    "@types/react": "^18.3.0",
     "esbuild": "^0.25.0",
     "react": "^18.3.1",
-    "@types/react": "^18.3.0"
+    "tsdown": "^0.22.14",
+    "typescript": "^6.0.3",
+    "@deepseek-ai/dsh": "0.2.0-rc.2"
   },
   "peerDependenciesMeta": {
     "@deepseek-ai/dsh-client-connection": {
