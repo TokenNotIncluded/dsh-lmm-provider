@@ -17,6 +17,8 @@ import type {} from '@deepseek-ai/dsh-attachment';
 import type {} from '@deepseek-ai/dsh-authorization';
 import type {} from '@deepseek-ai/dsh-credentials';
 import { LmmIntegration } from '../vendor/pi-lmm-provider/src/provider.ts';
+import { resolveKnownCapabilities } from '../vendor/pi-lmm-provider/src/capabilities.ts';
+import type { CapabilityResolver } from '../vendor/pi-lmm-provider/src/catalog.ts';
 import { PROVIDER_ID } from '../vendor/pi-lmm-provider/src/protocol.ts';
 import { mountBrowserAuth } from './web-auth.ts';
 
@@ -30,6 +32,15 @@ const STREAM_IDLE_TIMEOUT_MS = 300_000;
 const MAX_REQUEST_IMAGE_BYTES = 20 * 1024 * 1024;
 const REQUEST_IMAGE_PIXEL_BUDGET = 2048 * 2048;
 const REQUEST_IMAGE_MAX_BYTES = 1024 * 1024;
+
+/** LMM is a gateway even when its model uses the vendor's native protocol. */
+export const resolveDshCapabilities: CapabilityResolver = (entry) => {
+  const known = resolveKnownCapabilities(entry);
+  return known === undefined ? undefined : {
+    ...known,
+    compat: { ...known.compat, sendSessionAffinityHeaders: true },
+  };
+};
 
 async function waitWithSignal(task: Promise<void>, signal?: AbortSignal): Promise<void> {
   if (signal === undefined) return task;
@@ -160,26 +171,36 @@ export function lmmProfile(integration: LmmIntegration): ResolvedPiAiProviderPro
     maxRequestImageBytes: MAX_REQUEST_IMAGE_BYTES,
     requestImagePixelBudget: REQUEST_IMAGE_PIXEL_BUDGET,
     requestImageMaxBytes: REQUEST_IMAGE_MAX_BYTES,
-    retryPolicy: resolveRetryPolicy(undefined, 'dsh-lmm-provider retryPolicy'),
+    // A timeout or empty response may already have incurred a bill upstream.
+    // Disable host retries as well as the relay's SDK retries.
+    retryPolicy: resolveRetryPolicy({ mode: 'normal', maxRetries: 0 }, 'dsh-lmm-provider retryPolicy'),
     piProvider: integration.provider,
     modelErrors: new Map(),
     configuredMaxTokens: new Map(),
   };
 }
 
-class CatalogCoordinator {
+export class CatalogCoordinator {
   private pending: Promise<void> | undefined;
   private checkedAt = 0;
+  private revision = 0;
   private readonly models: Models;
 
   constructor(models: Models) { this.models = models; }
 
-  invalidate(): void { this.checkedAt = 0; }
+  invalidate(): void { this.checkedAt = 0; this.revision++; }
 
   async refresh(signal?: AbortSignal, force = false, allowNetwork = true): Promise<void> {
     signal?.throwIfAborted();
     if (!force && Date.now() - this.checkedAt < REFRESH_TTL_MS) return;
+    if (this.pending !== undefined) {
+      await waitWithSignal(this.pending, signal);
+      // A credential change may have invalidated the task we just joined.
+      if (force || this.checkedAt === 0) return this.refresh(signal, force, allowNetwork);
+      return;
+    }
     if (this.pending === undefined) {
+      const revision = this.revision;
       const task = this.models.refresh({
         providers: [PROVIDER_ID],
         allowNetwork,
@@ -188,7 +209,8 @@ class CatalogCoordinator {
       }).then((result) => {
         const error = result.errors.get(PROVIDER_ID);
         if (error !== undefined) throw error;
-        if (!result.aborted) this.checkedAt = Date.now();
+        if (result.aborted) throw new DOMException('LMM catalog refresh aborted.', 'AbortError');
+        if (revision === this.revision) this.checkedAt = Date.now();
       });
       const pending = task.finally(() => {
         if (this.pending === pending) this.pending = undefined;
@@ -196,6 +218,7 @@ class CatalogCoordinator {
       this.pending = pending;
     }
     await waitWithSignal(this.pending, signal);
+    if (this.checkedAt === 0) await this.refresh(signal, force, allowNetwork);
   }
 }
 
@@ -242,6 +265,7 @@ export function apply(ctx: Context): void {
   const integration = new LmmIntegration({
     clientId: DSH_CLIENT_ID,
     hostName: 'DSH',
+    capabilities: resolveDshCapabilities,
     loginTimeoutMs: 5 * 60_000,
     refreshJournalDirectory: join(resolveDshHome(), 'lmm-refresh-journal'),
   });

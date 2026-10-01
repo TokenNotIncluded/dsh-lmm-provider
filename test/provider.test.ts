@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import type { OAuthCredential, ProviderAuthInteraction } from '@earendil-works/pi-ai';
+import type { Models, OAuthCredential, ProviderAuthInteraction } from '@earendil-works/pi-ai';
 import type { Context } from '@deepseek-ai/cordis';
 import type { CredentialRecord } from '@deepseek-ai/dsh-credentials';
 import { credentialKey } from '@deepseek-ai/dsh-credentials';
 import type { LlmAdapter } from '@deepseek-ai/dsh-llm';
 import type { AuthorizationFlow } from '@deepseek-ai/dsh-authorization';
-import { apply, credentialStoreFrom, DSH_CLIENT_ID, RECORD_KEY } from '../src/index.ts';
+import { apply, CatalogCoordinator, credentialStoreFrom, DSH_CLIENT_ID, lmmProfile, RECORD_KEY, resolveDshCapabilities } from '../src/index.ts';
 import { LmmIntegration } from '../vendor/pi-lmm-provider/src/provider.ts';
 
 const issuer = 'https://api.lmm.best';
@@ -105,6 +105,46 @@ test('credential key is namespaced to the DSH plugin', () => {
   assert.equal(RECORD_KEY, credentialKey('dsh-lmm-provider', 'lmm'));
 });
 
+test('LMM gateway models enable session affinity without guessing unknown capabilities', () => {
+  const entry = { group: 'GPT-Pro', upstream_model: 'gpt-6-astra', apis: ['openai-completions'] };
+  const known = resolveDshCapabilities(entry as Parameters<typeof resolveDshCapabilities>[0]);
+  assert.ok(known !== undefined && 'sendSessionAffinityHeaders' in known.compat);
+  assert.equal(known.compat.sendSessionAffinityHeaders, true);
+  assert.equal(resolveDshCapabilities({ ...entry, upstream_model: 'not-a-real-model' } as Parameters<typeof resolveDshCapabilities>[0]), undefined);
+});
+
+test('host cannot replay a potentially billed LMM model request', () => {
+  const integration = new LmmIntegration();
+  try {
+    const policy = lmmProfile(integration).retryPolicy;
+    assert.equal(policy.mode, 'normal');
+    assert.equal(policy.mode === 'normal' && policy.maxRetries, 0);
+  } finally { integration.dispose(); }
+});
+
+test('credential invalidation during catalog refresh forces a new refresh for every waiter', async () => {
+  const releases: (() => void)[] = [];
+  const models = { refresh: () => new Promise((resolve) => releases.push(() => resolve({ errors: new Map(), aborted: false }))) } as unknown as Models;
+  const catalog = new CatalogCoordinator(models);
+  const first = catalog.refresh();
+  catalog.invalidate();
+  const second = catalog.refresh();
+  releases[0]!();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(releases.length, 2);
+  releases[1]!();
+  await Promise.all([first, second]);
+  await catalog.refresh();
+  assert.equal(releases.length, 2);
+});
+
+test('aborted catalog refresh fails once instead of recursively retrying', async () => {
+  let calls = 0;
+  const models = { refresh: async () => { calls++; return { errors: new Map(), aborted: true }; } } as unknown as Models;
+  await assert.rejects(new CatalogCoordinator(models).refresh(), { name: 'AbortError' });
+  assert.equal(calls, 1);
+});
+
 test('mounts the fixed LMM adapter and browser authorization flow', () => {
   const backing = new MemoryCredentials();
   let adapter: LlmAdapter | undefined;
@@ -129,6 +169,8 @@ test('mounts the fixed LMM adapter and browser authorization flow', () => {
 
   apply(ctx);
   assert.equal(adapter?.providerInfo('lmm').name, 'LMM');
+  const policy = adapter?.providerRetryPolicy('lmm');
+  assert.equal(policy?.mode === 'normal' && policy.maxRetries, 0);
   assert.equal(flow?.key, RECORD_KEY);
   assert.deepEqual(flow?.methods, [{ id: 'oauth', label: 'Sign in with LMM' }]);
 });
