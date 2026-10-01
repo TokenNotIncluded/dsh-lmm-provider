@@ -1,0 +1,33 @@
+name: DSH provider compatibility
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  provider:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        host: [0.2.0-rc.2, latest]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.19.0'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm install --global pnpm@latest
+      - run: npm run typecheck && npm test && npm run pack:check
+      - run: npm install --no-save --ignore-scripts @deepseek-ai/dsh@${{ matrix.host }}
+      - run: npm run test:host
+      - name: Verify the shipped tarball on the actual host
+        run: |
+          npm pack --ignore-scripts
+          LMM_DSH_PLUGIN="$PWD/tokennotincluded-dsh-lmm-provider-0.1.0-alpha.5.tgz" npm run test:host
