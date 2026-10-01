@@ -21,6 +21,7 @@ globalThis.fetch = async (input, init) => {
   if (url.pathname === '/api/oauth2/catalog') return json({ schema_version: 1, resource, updated_at: 1789240000, groups: [{ id: 'ZGVmYXVsdA', name: 'default', scope: 'group:ZGVmYXVsdA', multiplier: 1 }], models: [{ id: 'lmm:ZGVmYXVsdA:Z3B0LTRvLW1pbmk', group_id: 'ZGVmYXVsdA', group: 'default', upstream_model: 'gpt-4o-mini', name: 'default / gpt-4o-mini', apis: ['openai-completions'], pricing: { currency: 'USD', unit: 'million_tokens', price_basis: 'configured_base_rates', group_multiplier: 1, trust_multiplier: 1, input: 1, output: 2, cache_read: 0, cache_write: 0, request: null, final_cost_depends_on_usage: true, updated_at: 1789240000 }, native_cost: { input: 1, output: 2, cacheRead: 0, cacheWrite: 0 } }] });
   if (url.pathname === '/v1/chat/completions') {
     assert.equal(headers.get('x-lmm-group'), 'ZGVmYXVsdA');
+    assert.equal(headers.get('session_id'), 'dsh-host-fixture-session');
     assert.equal(headers.has('x-api-key'), false);
     const body = JSON.parse(init.body);
     assert.equal(body.model, 'gpt-4o-mini');
