@@ -17,7 +17,7 @@ function run(args, extra = {}) {
 }
 let host;
 try {
-  await run(['plugin', '--profile', 'web', 'add', root, '--ignore-scripts']).done;
+  await run(['plugin', '--profile', 'web', 'add', process.env.LMM_DSH_PLUGIN ?? root, '--ignore-scripts']).done;
   await writeFile(join(home, 'profiles/web/cordis.patch.yml'), '- insert:\n    - id: lmm-host-test-probe\n      name: ' + JSON.stringify(resolve(root, 'test/host-probe.mjs')) + '\n');
   host = run(['web', '--no-open', '--port', '0'], { NODE_OPTIONS: '--import=' + resolve(root, 'test/host-fixture.mjs') });
   let base;
