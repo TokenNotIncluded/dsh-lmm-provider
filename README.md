@@ -2,7 +2,7 @@
 
 Use the models available to your [LMM](https://api.lmm.best) account directly in DeepSeek Harness. Authentication uses browser OAuth with PKCE and a loopback callback. No API key is pasted into DSH.
 
-Version `0.1.0-alpha.5` is tested with the actual DSH Web host `0.2.0-rc.2` and the current npm `latest`. This is a tested baseline, not an upper version limit. All DSH service dependencies have a minimum compatible version and no upper bound. Older Desktop `0.1.7-alpha.2` can use plugin `0.1.0-alpha.4`. It requires Node.js `22.19.0` or newer in the supported Node 22 / Node 24+ lines. For DSH `0.1.5-rc.2`, use plugin `0.1.0-alpha.3` instead; the DSH runtime packages are not interchangeable between those releases.
+Version `0.1.0-alpha.6` is tested with the actual DSH Web host `0.2.0-rc.2`, `0.2.1-alpha.1` and the current npm `latest`. This is a tested baseline, not an upper version limit. DSH prereleases require explicit npm semver admission. The alpha host is tested with its matching service packages and Cordis peer; normal installation remains on the official latest tag. The DSH-native pi-ai dependency stays on the host-supported 0.87 line, independently of the standalone Pi extension. Older Desktop `0.1.7-alpha.2` can use plugin `0.1.0-alpha.4`. It requires Node.js `22.19.0` or newer in the supported Node 22 / Node 24+ lines. For DSH `0.1.5-rc.2`, use plugin `0.1.0-alpha.3` instead; the DSH runtime packages are not interchangeable between those releases.
 
 ## Official DSH Desktop
 
@@ -67,3 +67,7 @@ The package ships both the Host adapter and the browser bundle. Tests cover cred
 `test:host` launches the official DSH Web process in a temporary home with the built plugin, checks its authenticated Connection routes, drives browser OAuth PKCE through a local fixture, verifies the durable credential and account catalog, streams a model response through the real DSH adapter, then signs out. The LMM network is intercepted by a test-only preload; no production grant or billable call is made. CI runs the baseline and current official npm host.
 
 LMM model requests carry DSH's conversation session ID as gateway affinity headers when the transport supports them. Credential updates invalidate the catalog even when discovery is already running. Automatic model-request retries are disabled at both the SDK and DSH host levels: a timeout, empty response, or lost connection may already have incurred a charge, so retry manually after checking the result.
+
+### Shared runtime dependency rule
+
+DSH authorization, home paths and pi-ai adapter packages are host-owned peer dependencies. Installing a second independently selected copy can shadow the active runtime and make stable DSH disable its authorization/model services. Development pins remain on the stable host, and the CI matrix verifies source plus tarball installation on each supported host. Do not use `allow-version` or disable the host compatibility checks to work around a dependency mismatch.
