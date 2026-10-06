@@ -46,4 +46,11 @@ try {
   assert.ok(chunks.some(c=>c.type==='finish' && c.reason.kind==='stop'));
   await rpc('logout'); assert.equal((await rpc('status')).signedIn,false);
   console.log('Actual DSH web host: plugin boot, authenticated RPC, OAuth PKCE callback, durable credential, catalog, streaming model invocation, sign-out passed.');
+} catch (error) {
+  // This host owns a fresh temporary home and only fixture credentials. Still redact
+  // launch capabilities and OAuth material before exposing loader errors in CI.
+  const diagnostics = (host?.output() ?? '').replace(/([?&](?:token|code|state)=)[^&\s]+/g, '$1[redacted]')
+    .replace(/lmm_(?:at|rt)_[\w.-]+/g, '[redacted]').replace(/Bearer\s+[^\s]+/gi, 'Bearer [redacted]');
+  console.error('Isolated DSH host diagnostics:\n' + diagnostics.slice(-12000));
+  throw error;
 } finally { if(host && host.child.exitCode === null && host.child.signalCode === null) { host.child.kill('SIGTERM'); await new Promise(r=>host.child.once('exit',r)); } await rm(home,{recursive:true,force:true}); }
