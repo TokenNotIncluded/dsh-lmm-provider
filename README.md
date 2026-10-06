@@ -67,3 +67,7 @@ The package ships both the Host adapter and the browser bundle. Tests cover cred
 `test:host` launches the official DSH Web process in a temporary home with the built plugin, checks its authenticated Connection routes, drives browser OAuth PKCE through a local fixture, verifies the durable credential and account catalog, streams a model response through the real DSH adapter, then signs out. The LMM network is intercepted by a test-only preload; no production grant or billable call is made. CI runs the baseline and current official npm host.
 
 LMM model requests carry DSH's conversation session ID as gateway affinity headers when the transport supports them. Credential updates invalidate the catalog even when discovery is already running. Automatic model-request retries are disabled at both the SDK and DSH host levels: a timeout, empty response, or lost connection may already have incurred a charge, so retry manually after checking the result.
+
+### Shared runtime dependency rule
+
+DSH authorization, home paths and pi-ai adapter packages are host-owned peer dependencies. Installing a second independently selected copy can shadow the active runtime and make stable DSH disable its authorization/model services. Development pins remain on the stable host, and the CI matrix verifies source plus tarball installation on each supported host. Do not use `allow-version` or disable the host compatibility checks to work around a dependency mismatch.
