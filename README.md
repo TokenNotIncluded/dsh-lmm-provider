@@ -2,7 +2,7 @@
 
 Use the models available to your [LMM](https://api.lmm.best) account directly in DeepSeek Harness. Authentication uses browser OAuth with PKCE and a loopback callback. No API key is pasted into DSH.
 
-Version `0.1.0-alpha.6` is tested with the actual DSH Web host `0.2.0-rc.2`, `0.2.1-alpha.1` and the current npm `latest`. This is a tested baseline, not an upper version limit. DSH prereleases require explicit npm semver admission. The alpha host is tested with its matching service packages and Cordis peer; normal installation remains on the official latest tag. The DSH-native pi-ai dependency stays on the host-supported 0.87 line, independently of the standalone Pi extension. Older Desktop `0.1.7-alpha.2` can use plugin `0.1.0-alpha.4`. It requires Node.js `22.19.0` or newer in the supported Node 22 / Node 24+ lines. For DSH `0.1.5-rc.2`, use plugin `0.1.0-alpha.3` instead; the DSH runtime packages are not interchangeable between those releases.
+Version `0.1.0-alpha.7` is tested with the actual DSH Web host `0.2.0-rc.2`, `0.2.1-alpha.1`, `0.2.1-alpha.2` and the current npm `latest`. This is a tested baseline, not an upper version limit. DSH prereleases require explicit npm semver admission. The alpha host is tested with its matching service packages and Cordis peer; normal installation remains on the official latest tag. The DSH host owns the pi-ai dependency: earlier releases use its 0.87 line, while `0.2.1-alpha.2` uses 1.x. The plugin uses the matching host SDK rather than installing a conflicting second copy. Older Desktop `0.1.7-alpha.2` can use plugin `0.1.0-alpha.4`. It requires Node.js `22.19.0` or newer in the supported Node 22 / Node 24+ lines. For DSH `0.1.5-rc.2`, use plugin `0.1.0-alpha.3` instead; the DSH runtime packages are not interchangeable between those releases.
 
 ## Official DSH Desktop
 
@@ -70,4 +70,4 @@ LMM model requests carry DSH's conversation session ID as gateway affinity heade
 
 ### Shared runtime dependency rule
 
-DSH authorization, home paths and pi-ai adapter packages are host-owned peer dependencies. Installing a second independently selected copy can shadow the active runtime and make stable DSH disable its authorization/model services. Development pins remain on the stable host, and the CI matrix verifies source plus tarball installation on each supported host. Do not use `allow-version` or disable the host compatibility checks to work around a dependency mismatch.
+DSH authorization, home paths, the pi-ai adapter and the pi-ai SDK itself are host-owned peer dependencies. Installing a second independently selected copy can shadow the active runtime and make stable DSH disable its authorization/model services. Development pins remain on the stable host, and the CI matrix verifies source plus tarball installation on each supported host. Do not use `allow-version` or disable the host compatibility checks to work around a dependency mismatch.
