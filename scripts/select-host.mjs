@@ -14,6 +14,9 @@ const version = view(`@deepseek-ai/dsh@${selector}`, 'version');
 assert.equal(typeof version, 'string', 'The host selector must resolve to one version');
 const peers = view(`@deepseek-ai/dsh-llm-pi-ai@${version}`, 'peerDependencies');
 const cordis = peers['@deepseek-ai/cordis'];
+const adapterDependencies = view(`@deepseek-ai/dsh-llm-pi-ai@${version}`, 'dependencies');
+const piAiRange = adapterDependencies['@earendil-works/pi-ai'];
+assert.equal(typeof piAiRange, 'string', 'The official adapter must declare its pi-ai SDK version');
 assert.equal(typeof cordis, 'string', 'The official adapter must declare its Cordis peer');
 const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const names = new Set(['@deepseek-ai/dsh']);
@@ -24,7 +27,10 @@ for (const section of ['dependencies', 'peerDependencies', 'devDependencies']) {
 }
 const specs = [...names].sort().map(name => `${name}@${version}`);
 specs.push(`@deepseek-ai/cordis@${cordis}`);
-console.log(`Testing DSH ${version} with official Cordis constraint ${cordis}`);
+// The provider and the host adapter must use one pi-ai copy: 1.x and 0.87
+// have different transcript brands even when the provider APIs look similar.
+specs.push(`@earendil-works/pi-ai@${piAiRange}`);
+console.log(`Testing DSH ${version} with official Cordis ${cordis} and pi-ai ${piAiRange}`);
 const result = spawnSync(npm, ['install', '--no-save', '--package-lock=false', '--ignore-scripts', ...specs], {
   stdio: 'inherit', timeout: 300_000,
 });
