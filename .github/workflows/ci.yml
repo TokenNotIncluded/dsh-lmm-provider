@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        host: [0.2.0-rc.2, 0.2.1-alpha.1, latest]
+        host: [0.2.0-rc.2, 0.2.1-alpha.1, 0.2.1-alpha.2, latest]
     steps:
       - uses: actions/checkout@v4
         with:
