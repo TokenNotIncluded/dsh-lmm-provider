@@ -2,6 +2,7 @@
   "name": "@tokennotincluded/dsh-lmm-provider",
   "version": "0.1.0-alpha.7",
   "description": "LMM browser OAuth and account-scoped model provider for DeepSeek Harness",
+  "icon": "assets/icon.svg",
   "type": "module",
   "license": "AGPL-3.0-only",
   "author": "TokenNotIncluded",
@@ -30,6 +31,7 @@
   "files": [
     "lib/index.mjs",
     "lib/client.js",
+    "assets/icon.svg",
     "cordis.patch.yml",
     "README.md"
   ],

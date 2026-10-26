@@ -1,5 +1,7 @@
 # LMM provider for DSH
 
+<img src="https://raw.githubusercontent.com/TokenNotIncluded/dsh-lmm-provider/main/assets/icon.svg" alt="LMM for DSH" width="128" height="128" />
+
 Use the models available to your [LMM](https://api.lmm.best) account directly in DeepSeek Harness. Authentication uses browser OAuth with PKCE and a loopback callback. No API key is pasted into DSH.
 
 Version `0.1.0-alpha.7` is tested with the actual DSH Web host `0.2.0-rc.2`, `0.2.1-alpha.1`, `0.2.1-alpha.2` and the current npm `latest`. This is a tested baseline, not an upper version limit. DSH prereleases require explicit npm semver admission. The alpha host is tested with its matching service packages and Cordis peer; normal installation remains on the official latest tag. The DSH host owns the pi-ai dependency: earlier releases use its 0.87 line, while `0.2.1-alpha.2` uses 1.x. The plugin uses the matching host SDK rather than installing a conflicting second copy. Older Desktop `0.1.7-alpha.2` can use plugin `0.1.0-alpha.4`. It requires Node.js `22.19.0` or newer in the supported Node 22 / Node 24+ lines. For DSH `0.1.5-rc.2`, use plugin `0.1.0-alpha.3` instead; the DSH runtime packages are not interchangeable between those releases.
@@ -48,7 +50,7 @@ dsh plugin --profile headless add /absolute/path/to/dsh-lmm-provider
 3. Open the authorization link in the browser where you are signed in to LMM. Click **Continue** on the LMM page, review and approve access, then return to DSH.
 4. The card reports **Sign-in complete** only after DSH observes the saved credential. Select an LMM model in your conversation.
 
-Cancel stops the pending login; closing Settings also cancels that page's active attempt. A sign-in attempt expires after five minutes. Prompt answers and OAuth credentials are never returned in status responses. The Web controls use DSH's existing authenticated API transport and its Host/Origin checks.
+Cancel keeps tracking the pending login until the host finishes cancellation. Closing Settings also cancels that page's active attempt, including a login that is still starting. A sign-in attempt expires after five minutes. Prompt answers and OAuth credentials are never returned in status responses. The Web controls use DSH's existing authenticated API transport and its Host/Origin checks.
 
 **Sign out** removes the local credential. It does not revoke the server grant; revoke the authorization in your LMM account when needed. Model access, groups, capabilities, and prices come from the account-scoped LMM catalog. Token refresh is serialized by DSH and additionally fenced by a credential-free refresh journal under `DSH_HOME`.
 

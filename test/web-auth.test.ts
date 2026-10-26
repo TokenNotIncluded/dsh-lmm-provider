@@ -77,3 +77,27 @@ test('known callback failures get a useful message without returning private err
   assert.equal(JSON.stringify(failed).includes('private-value'), false);
   h.close();
 });
+test('cancel remains pending while the host drains authorization cleanup', async () => {
+  let finishCleanup: (() => void) | undefined;
+  const h = harness(async (request) => {
+    await new Promise<void>((resolve) => {
+      finishCleanup = resolve;
+    });
+    assert.equal(request.signal?.aborted, true);
+    return { status: 'cancelled' };
+  });
+  try {
+    const started = value(await h.call('begin'));
+    const cancelling = value(await h.call('cancel', { attempt: started.attempt }));
+    assert.equal(cancelling.state, 'pending');
+    assert.equal(value(await h.call('status')).busy, true);
+    assert.ok(finishCleanup);
+    finishCleanup();
+    await tick();
+    assert.equal(value(await h.call('poll', { attempt: started.attempt })).state, 'cancelled');
+    assert.equal(value(await h.call('status')).busy, false);
+  } finally {
+    finishCleanup?.();
+    h.close();
+  }
+});

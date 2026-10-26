@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ComponentType } from 'react';
+import logo from '../assets/icon.svg';
 
 type Result = { ok: true; value: unknown } | { ok: false; error: { message: string } };
 type Caller = (action: string, payload?: unknown) => Promise<unknown>;
@@ -25,14 +26,22 @@ function LoginCard({ call }: { call: Caller }) {
   const [view, setView] = useState<View>();
   const [answer, setAnswer] = useState('');
   const [error, setError] = useState('');
+  const [connectionInterrupted, setConnectionInterrupted] = useState(false);
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'manual'>('idle');
   const active = useRef<string>();
+  const generation = useRef(0);
   const refresh = useCallback(async () => {
     const status = await call('status') as { signedIn: boolean; busy: boolean };
     setSignedIn(status.signedIn); setBusy(status.busy);
   }, [call]);
   useEffect(() => { let disposed = false; void refresh().catch(() => { if (!disposed) setError('Cannot read LMM sign-in status. Reopen Settings to retry.'); }); return () => { disposed = true; }; }, [refresh]);
-  useEffect(() => () => { if (active.current) void call('cancel', { attempt: active.current }).catch(() => {}); }, [call]);
+  useEffect(() => {
+    generation.current++;
+    return () => {
+      generation.current++;
+      if (active.current) void call('cancel', { attempt: active.current }).catch(() => {});
+    };
+  }, [call]);
   useEffect(() => {
     if (view?.state !== 'pending') return;
     let disposed = false;
@@ -41,10 +50,16 @@ function LoginCard({ call }: { call: Caller }) {
       try {
         const next = await call('poll', { attempt: view.attempt }) as View;
         if (disposed) return;
+        setConnectionInterrupted(false);
         setView(next);
         if (next.state === 'pending') timer = setTimeout(() => void poll(), 750);
         else { active.current = undefined; setBusy(false); await refresh(); }
-      } catch { if (!disposed) { setError('Sign-in connection was interrupted. Cancel and try again.'); setBusy(false); } }
+      } catch {
+        if (!disposed) {
+          setConnectionInterrupted(true);
+          timer = setTimeout(() => void poll(), 1500);
+        }
+      }
     };
     timer = setTimeout(() => void poll(), 300);
     return () => { disposed = true; clearTimeout(timer); };
@@ -52,14 +67,33 @@ function LoginCard({ call }: { call: Caller }) {
   useEffect(() => { setAnswer(''); }, [view?.prompt?.id]);
   const loginUrl = view?.state === 'pending' ? [...view.notices].reverse().find((notice) => notice.url && safeLoginUrl(notice.url))?.url : undefined;
   const start = async () => {
-    setError(''); setCopyState('idle'); setBusy(true);
-    try { const next = await call('begin') as View; active.current = next.attempt; setView(next); }
-    catch (cause) { setBusy(false); setError(cause instanceof Error ? cause.message : 'Sign-in could not start.'); }
+    const startedAt = generation.current;
+    setError(''); setConnectionInterrupted(false); setCopyState('idle'); setBusy(true);
+    try {
+      const next = await call('begin') as View;
+      if (generation.current !== startedAt) {
+        await call('cancel', { attempt: next.attempt });
+        return;
+      }
+      active.current = next.attempt;
+      setView(next);
+    } catch (cause) {
+      if (generation.current === startedAt) {
+        setBusy(false);
+        setError(cause instanceof Error ? cause.message : 'Sign-in could not start.');
+      }
+    }
   };
-  const cancel = async () => { if (view) { await call('cancel', { attempt: view.attempt }); active.current = undefined; setView(undefined); await refresh(); } };
+  const cancel = async () => {
+    // Cancellation can still be draining host-side credential work. Keep polling
+    // the same attempt until the host reports its final outcome.
+    if (active.current) await call('cancel', { attempt: active.current });
+  };
   const submit = async () => {
     if (!view?.prompt) return;
-    try { setView(await call('answer', { attempt: view.attempt, prompt: view.prompt.id, value: answer }) as View); setAnswer(''); }
+    // Polling owns the view; an older answer response must not replace a newer
+    // prompt or a second sign-in attempt. A prompt change clears its input above.
+    try { await call('answer', { attempt: view.attempt, prompt: view.prompt.id, value: answer }); }
     catch { setError('This question expired. Wait for the current sign-in step.'); }
   };
   const signOut = async () => { try { await call('logout'); setView(undefined); await refresh(); } catch { setError('Sign-out failed. Try again.'); } };
@@ -70,7 +104,10 @@ function LoginCard({ call }: { call: Caller }) {
   };
   const prompt = view?.prompt;
   return <section aria-label="LMM" style={{ marginTop: 24, padding: 20, border: '1px solid #8886', borderRadius: 8 }}>
-    <h3 style={{ margin: '0 0 8px' }}>LMM</h3>
+    <header style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <img src={logo} alt="" aria-hidden="true" width={48} height={48} />
+      <h3 style={{ margin: 0 }}>LMM</h3>
+    </header>
     <p>{signedIn ? 'Signed in with LMM. Choose an LMM model in your conversation.' : 'Connect your LMM account in the browser. No API key is needed.'}</p>
     <div style={{ display: 'flex', gap: 10 }}>
       <button style={buttonStyle} disabled={busy} onClick={() => void start()}>Sign in with LMM</button>
@@ -89,6 +126,7 @@ function LoginCard({ call }: { call: Caller }) {
       {view?.state === 'authorized' && <p>Sign-in complete.</p>}
       {view?.state === 'cancelled' && <p>Sign-in cancelled.</p>}
       {view?.state === 'failed' && <p role="alert">{view.error ?? 'Sign-in failed. Try again.'}</p>}
+      {connectionInterrupted && <p role="status">Sign-in connection was interrupted. Reconnecting; you can still cancel.</p>}
       {error && <p role="alert">{error}</p>}
     </div>
     {prompt && <form onSubmit={(event) => { event.preventDefault(); void submit(); }}>
