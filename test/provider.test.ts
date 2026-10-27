@@ -8,6 +8,7 @@ import type { LlmAdapter } from '@deepseek-ai/dsh-llm';
 import type { AuthorizationFlow } from '@deepseek-ai/dsh-authorization';
 import { apply, CatalogCoordinator, credentialStoreFrom, DSH_CLIENT_ID, lmmProfile, RECORD_KEY, resolveDshCapabilities } from '../src/index.ts';
 import { LmmIntegration } from '../vendor/pi-lmm-provider/src/provider.ts';
+import { priceReport } from '../vendor/pi-lmm-provider/src/catalog.ts';
 
 const issuer = 'https://api.lmm.best';
 const resource = `${issuer}/api/oauth2`;
@@ -40,6 +41,28 @@ class MemoryCredentials {
 function context(credentials: MemoryCredentials): Context {
   return { credentials } as unknown as Context;
 }
+
+test('LMM price report includes all entries and authorized groups without treating cached costs as server rates', () => {
+  const group = { id: 'ZGVmYXVsdA', name: 'default', scope: 'group:ZGVmYXVsdA', multiplier: null };
+  const admissions = Array.from({ length: 45 }, (_, index) => ({
+    entry: {
+      id: `entry-${index}`, name: `entry ${index}`, group_id: group.id, group: group.name,
+      upstream_model: `model-${index}`, native_cost: null,
+      pricing: {
+        currency: 'unknown', unit: 'unknown', price_basis: 'cached_model_rates',
+        group_multiplier: null, trust_multiplier: null,
+        input: null, output: null, cache_read: null, cache_write: null, request: null,
+        final_cost_depends_on_usage: true, updated_at: 1,
+      },
+    },
+    ...(index === 0 ? { model: { id: 'cached-model' } } : { reason: 'Capability metadata unavailable; read-only.' }),
+  }));
+  const report = priceReport(admissions as never, '', [group]);
+  assert.match(report, /Authorized groups \(1\):/);
+  assert.match(report, /model-44/);
+  assert.doesNotMatch(report, /Showing 40/);
+  assert.match(report, /Pi cost retains a cached model estimate; server rates are unknown/);
+});
 
 test('bridges DSH credential records without exposing unrelated providers', async () => {
   const backing = new MemoryCredentials();

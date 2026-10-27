@@ -18,7 +18,9 @@ import type {} from '@deepseek-ai/dsh-authorization';
 import type {} from '@deepseek-ai/dsh-credentials';
 import { LmmIntegration } from '../vendor/pi-lmm-provider/src/provider.ts';
 import { resolveKnownCapabilities } from '../vendor/pi-lmm-provider/src/capabilities.ts';
-import type { CapabilityResolver } from '../vendor/pi-lmm-provider/src/catalog.ts';
+import type {
+  CapabilityResolver,
+} from '../vendor/pi-lmm-provider/src/catalog.ts';
 import { PROVIDER_ID } from '../vendor/pi-lmm-provider/src/protocol.ts';
 import { mountBrowserAuth } from './web-auth.ts';
 
