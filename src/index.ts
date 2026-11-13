@@ -171,6 +171,8 @@ export function lmmProfile(integration: LmmIntegration): ResolvedPiAiProviderPro
     displayName: 'LMM',
     streamIdleTimeoutMs: STREAM_IDLE_TIMEOUT_MS,
     maxRequestImageBytes: MAX_REQUEST_IMAGE_BYTES,
+    maxRequestImages: 50,
+    imageOffloadCountQuantum: 10,
     requestImagePixelBudget: REQUEST_IMAGE_PIXEL_BUDGET,
     requestImageMaxBytes: REQUEST_IMAGE_MAX_BYTES,
     // A timeout or empty response may already have incurred a bill upstream.
