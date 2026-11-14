@@ -33,7 +33,7 @@
     "lib/client.js",
     "assets/icon.svg",
     "cordis.patch.yml",
-    "README.md"
+    "README.md", "DYNAMIC_CATALOG.md"
   ],
   "dsh": {
     "plugin": {

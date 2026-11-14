@@ -1,5 +1,7 @@
 # LMM provider for DSH
 
+Server metadata and prices: [dynamic catalog](DYNAMIC_CATALOG.md).
+
 <img src="https://raw.githubusercontent.com/TokenNotIncluded/dsh-lmm-provider/main/assets/icon.svg" alt="LMM for DSH" width="128" height="128" />
 
 Use the models available to your [LMM](https://api.lmm.best) account directly in DeepSeek Harness. Authentication uses browser OAuth with PKCE and a loopback callback. No API key is pasted into DSH.

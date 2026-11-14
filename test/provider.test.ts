@@ -197,3 +197,16 @@ test('mounts the fixed LMM adapter and browser authorization flow', () => {
   assert.equal(flow?.key, RECORD_KEY);
   assert.deepEqual(flow?.methods, [{ id: 'oauth', label: 'Sign in with LMM' }]);
 });
+
+test('DSH consumes dynamic server capabilities through its nested Pi provider', () => {
+  const result = resolveDshCapabilities({id:'lmm:ZGVmYXVsdA:ZnV0dXJl', group_id:'ZGVmYXVsdA', group:'default',
+    upstream_model:'future',name:'Future',apis:['openai-completions'],native_cost:null,
+    pricing:{currency:'USD',unit:'million_tokens',price_basis:'effective_user_rates',group_multiplier:1,trust_multiplier:1,
+      input:null,output:null,cache_read:null,cache_write:null,request:null,final_cost_depends_on_usage:true,updated_at:1},
+    metadata:{context_window:128000,max_input_tokens:100000,max_output_tokens:16000,
+      input_modalities:['text'],output_modalities:['text'],reasoning:true,tool_call:true,source:'server'}});
+  assert.equal(result?.contextWindow,100000);
+  assert.equal(result?.maxTokens,16000);
+  assert.ok(result && 'sendSessionAffinityHeaders' in result.compat);
+  assert.equal(result.compat.sendSessionAffinityHeaders,true);
+});
