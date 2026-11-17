@@ -1,12 +1,16 @@
 # LMM provider for DSH
 
-Server metadata and prices: [dynamic catalog](DYNAMIC_CATALOG.md).
+Account models, cached models.dev metadata and server prices: [dynamic catalog](DYNAMIC_CATALOG.md).
 
 <img src="https://raw.githubusercontent.com/TokenNotIncluded/dsh-lmm-provider/main/assets/icon.svg" alt="LMM for DSH" width="128" height="128" />
 
 Use the models available to your [LMM](https://api.lmm.best) account directly in DeepSeek Harness. Authentication uses browser OAuth with PKCE and a loopback callback. No API key is pasted into DSH.
 
 The current source tree is tested with the actual DSH Web host `0.2.0-rc.2`, `0.2.1-alpha.1`, `0.2.1-alpha.2` and `0.2.2-rc.1` (the current npm `latest`). This is a tested baseline, not an upper version limit. DSH prereleases require explicit npm semver admission. The alpha host is tested with its matching service packages and Cordis peer; normal installation remains on the official latest tag. The current maintenance fixture uses the coherent `0.2.2-rc.1` service cohort, Cordis `4.1.0` and pi-ai `1.5.2`; React stays on the host's 18.x line. The DSH host owns the pi-ai dependency: earlier releases use its 0.87 line, while `0.2.1-alpha.2` uses 1.x. The plugin uses the matching host SDK rather than installing a conflicting second copy. Older Desktop `0.1.7-alpha.2` can use plugin `0.1.0-alpha.4`. It requires Node.js `22.19.0` or newer in the supported Node 22 / Node 24+ lines. For DSH `0.1.5-rc.2`, use plugin `0.1.0-alpha.3` instead; the DSH runtime packages are not interchangeable between those releases.
+
+## Model discovery
+
+The authenticated LMM catalog determines the complete available model list. The nested Pi adapter fills missing limits and capabilities from the full [models.dev API](https://models.dev/api.json?type=all), with automatic local caching and fuzzy name matching. There is no provider-name or model-ID allowlist. Unknown compatible models remain selectable with labeled generic limits and unknown-price indicators. Explicit server fields and account prices take priority; public metadata never changes the authorized model/group ID.
 
 ## Official DSH Desktop
 
@@ -18,10 +22,10 @@ Keep Desktop open throughout the attempt. The authorization link is short lived 
 
 ## DSH CLI / Web profile
 
-Install the current built release in the profile you run. The current npm package is still `alpha.4`, so do not use npm `latest` for a current host until npm publication catches up:
+Install the current built release in the profile you run:
 
 ```sh
-dsh plugin --profile web add https://github.com/TokenNotIncluded/dsh-lmm-provider/releases/download/v0.1.0-alpha.5/dsh-lmm-provider.tgz --ignore-scripts
+dsh plugin --profile web add https://github.com/TokenNotIncluded/dsh-lmm-provider/releases/download/v0.1.0-alpha.8/dsh-lmm-provider.tgz --ignore-scripts
 ```
 
 For future updates, choose the newest built asset from [GitHub Releases](https://github.com/TokenNotIncluded/dsh-lmm-provider/releases/latest). The LMM DSH installation scripts resolve that current release automatically and keep the official host on npm `latest`. The DSH package manager also keys this dependency by package name. To switch from a local, Git or archive installation, remove `@tokennotincluded/dsh-lmm-provider` from that profile, then add the built release package. Credential records are stored separately from the package dependency.

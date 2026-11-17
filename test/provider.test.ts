@@ -128,12 +128,18 @@ test('credential key is namespaced to the DSH plugin', () => {
   assert.equal(RECORD_KEY, credentialKey('dsh-lmm-provider', 'lmm'));
 });
 
-test('LMM gateway models enable session affinity without guessing unknown capabilities', () => {
-  const entry = { group: 'GPT-Pro', upstream_model: 'gpt-6-astra', apis: ['openai-completions'] };
+test('LMM gateway keeps unknown compatible models and enables session affinity', () => {
+  const entry = { group: 'GPT-Pro', upstream_model: 'gpt-6-astra', apis: ['openai-completions'],
+    pricing: {currency:'USD',unit:'million_tokens',input:null,output:null,cache_read:null,cache_write:null} };
   const known = resolveDshCapabilities(entry as Parameters<typeof resolveDshCapabilities>[0]);
   assert.ok(known !== undefined && 'sendSessionAffinityHeaders' in known.compat);
   assert.equal(known.compat.sendSessionAffinityHeaders, true);
-  assert.equal(resolveDshCapabilities({ ...entry, upstream_model: 'not-a-real-model' } as Parameters<typeof resolveDshCapabilities>[0]), undefined);
+  const unknown = resolveDshCapabilities({ ...entry, upstream_model: 'unlisted-private-model' } as Parameters<typeof resolveDshCapabilities>[0]);
+  assert.ok(unknown);
+  assert.equal(unknown.contextWindow, 32768);
+  assert.equal(unknown.maxTokens, 4096);
+  assert.equal('sendSessionAffinityHeaders' in unknown.compat && unknown.compat.sendSessionAffinityHeaders, true);
+  assert.match(unknown.provenance ?? '', /unknown/);
 });
 
 test('host cannot replay a potentially billed LMM model request', () => {
