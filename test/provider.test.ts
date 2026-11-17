@@ -50,8 +50,7 @@ test('LMM price report includes all entries and authorized groups without treati
       upstream_model: `model-${index}`, native_cost: null,
       pricing: {
         currency: 'unknown', unit: 'unknown', price_basis: 'cached_model_rates',
-        group_multiplier: null, trust_multiplier: null,
-        input: null, output: null, cache_read: null, cache_write: null, request: null,
+        group_multiplier: null, input: null, output: null, cache_read: null, cache_write: null, request: null,
         final_cost_depends_on_usage: true, updated_at: 1,
       },
     },
@@ -207,8 +206,7 @@ test('mounts the fixed LMM adapter and browser authorization flow', () => {
 test('DSH consumes dynamic server capabilities through its nested Pi provider', () => {
   const result = resolveDshCapabilities({id:'lmm:ZGVmYXVsdA:ZnV0dXJl', group_id:'ZGVmYXVsdA', group:'default',
     upstream_model:'future',name:'Future',apis:['openai-completions'],native_cost:null,
-    pricing:{currency:'USD',unit:'million_tokens',price_basis:'effective_user_rates',group_multiplier:1,trust_multiplier:1,
-      input:null,output:null,cache_read:null,cache_write:null,request:null,final_cost_depends_on_usage:true,updated_at:1},
+    pricing:{currency:'USD',unit:'million_tokens',price_basis:'effective_user_rates',group_multiplier:1,input:null,output:null,cache_read:null,cache_write:null,request:null,final_cost_depends_on_usage:true,updated_at:1},
     metadata:{context_window:128000,max_input_tokens:100000,max_output_tokens:16000,
       input_modalities:['text'],output_modalities:['text'],reasoning:true,tool_call:true,source:'server'}});
   assert.equal(result?.contextWindow,100000);
