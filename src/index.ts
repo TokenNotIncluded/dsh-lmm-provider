@@ -166,7 +166,7 @@ function restate(prompt: AuthPrompt): AuthorizationPrompt {
 }
 
 export function lmmProfile(integration: LmmIntegration): ResolvedPiAiProviderProfile {
-  return {
+  const profile = {
     provider: PROVIDER_ID,
     displayName: 'LMM',
     streamIdleTimeoutMs: STREAM_IDLE_TIMEOUT_MS,
@@ -182,6 +182,7 @@ export function lmmProfile(integration: LmmIntegration): ResolvedPiAiProviderPro
     modelErrors: new Map(),
     configuredMaxTokens: new Map(),
   };
+  return profile;
 }
 
 export class CatalogCoordinator {
