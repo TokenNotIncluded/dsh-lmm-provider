@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const home = await mkdtemp(join(tmpdir(), 'dsh-lmm-host-'));
 const cli = process.env.LMM_DSH_CLI ?? resolve(root, 'node_modules/@deepseek-ai/dsh/lib/bin.js');
-const env = { ...process.env, DSH_HOME: home };
+const env = { ...process.env, DSH_HOME: home, LMM_MODELS_DEV_CACHE: join(home, 'models-dev.json') };
 function run(args, extra = {}) {
   const child = spawn(process.execPath, [cli, ...args], { cwd: root, env: { ...env, ...extra }, stdio: ['ignore', 'pipe', 'pipe'] });
   let output = ''; child.stdout.on('data', d => { output += d; }); child.stderr.on('data', d => { output += d; });
@@ -40,8 +40,9 @@ try {
   for (let n=0; n<100; n++) { view=await rpc('poll',{attempt:attempt.attempt}); if(view.state!=='pending')break; await new Promise(r=>setTimeout(r,50)); }
   assert.equal(view.state,'authorized'); assert.equal((await rpc('status')).signedIn,true);
   const response = await fetch(base.origin + '/api/lmm-host-test', { method:'POST',headers });
-  assert.equal(response.status,200); const {models,chunks}=await response.json();
-  assert.ok(models.some(m=>m.id==='default / gpt-4o-mini'));
+  assert.equal(response.status,200); const {models,resolved,chunks}=await response.json();
+  assert.ok(models.some(m=>m.id==='default / gpt-4o-minii'));
+  assert.equal(resolved.context?.contextWindow, 87500, 'fuzzy metadata supplies half of the model window');
   assert.equal(chunks.filter(c=>c.type==='text-delta').map(c=>c.text).join(''),'hello host');
   assert.ok(chunks.some(c=>c.type==='finish' && c.reason.kind==='stop'));
   await rpc('logout'); assert.equal((await rpc('status')).signedIn,false);

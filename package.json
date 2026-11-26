@@ -1,6 +1,6 @@
 {
   "name": "@tokennotincluded/dsh-lmm-provider",
-  "version": "0.1.0-alpha.9",
+  "version": "0.1.0-alpha.10",
   "description": "LMM browser OAuth and account-scoped model provider for DeepSeek Harness",
   "icon": "assets/icon.svg",
   "type": "module",
@@ -33,7 +33,8 @@
     "lib/client.js",
     "assets/icon.svg",
     "cordis.patch.yml",
-    "README.md", "DYNAMIC_CATALOG.md"
+    "README.md",
+    "DYNAMIC_CATALOG.md"
   ],
   "dsh": {
     "plugin": {
